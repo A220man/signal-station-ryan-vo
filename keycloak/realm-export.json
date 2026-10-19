@@ -1,0 +1,65 @@
+{
+  "realm": "signal-station",
+  "enabled": true,
+  "displayName": "Signal Station Realm",
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "roles": {
+    "realm": [
+      {
+        "name": "viewer",
+        "description": "Read-only access to sessions, goals, metrics, and logs"
+      },
+      {
+        "name": "operator",
+        "description": "Operator access to create sessions, dispatch agent goals, and run patches"
+      },
+      {
+        "name": "admin",
+        "description": "Administrative access for system compaction and security configuration"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "signal-station-client",
+      "name": "Signal Station Web & API Client",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": [
+        "http://127.0.0.1:3000/*",
+        "http://localhost:3000/*"
+      ],
+      "webOrigins": [
+        "http://127.0.0.1:3000",
+        "http://localhost:3000"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    }
+  ],
+  "identityProviders": [
+    {
+      "alias": "saml-enterprise-idp",
+      "displayName": "Enterprise SAML Broker",
+      "providerId": "saml",
+      "enabled": false,
+      "updateProfileFirstLoginMode": "on",
+      "trustEmail": true,
+      "storeToken": false,
+      "addReadTokenRoleOnCreate": false,
+      "authenticateByDefault": false,
+      "linkOnly": false,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "singleSignOnServiceUrl": "https://idp.example.com/saml2/sso",
+        "nameIDPolicyFormat": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
+        "wantAuthnRequestsSigned": "true",
+        "signatureAlgorithm": "RSA_SHA256"
+      }
+    }
+  ]
+}

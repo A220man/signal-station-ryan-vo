@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "name": "signal-station-ryan-vo",
+  "owner": "A220man",
+  "email": "ryandtvo@gmail.com",
+  "domain": "AI/ML developer tools",
+  "workflows": [
+    "Agent session lifecycle and persistent goal orchestration with token and time budgeting",
+    "Safety sandboxing and command risk policy enforcement for autonomous coding agents",
+    "Whitespace-tolerant patch application and resilient code editing",
+    "Event log compaction and delta pruning for long-running agent persistence",
+    "Coding agent safety and reasoning offline evaluation benchmark"
+  ],
+  "auth": "oidc-keycloak-saml-broker",
+  "llm_providers": [
+    "openai-compatible",
+    "anthropic",
+    "gemini",
+    "ollama"
+  ],
+  "summary": "Work in progress: signal-station-ryan-vo",
+  "version": "1.0.0",
+  "status": "work-in-progress"
+}
