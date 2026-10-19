@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "signal-station-ryan-vo"
+version = "1.0.0"
+description = "Autonomous coding agent orchestration platform featuring safety sandboxing, persistent session goals, whitespace-resilient patch editing, and event compaction."
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [
+    { name = "Ryan Vo", email = "ryandtvo@gmail.com" }
+]
+license = { text = "MIT" }
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn>=0.34.0",
+    "pydantic>=2.10.0",
+    "httpx>=0.28.0",
+    "pyjwt>=2.10.0",
+    "cryptography>=44.0.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.25.0"
+]
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+pythonpath = ["backend"]
+asyncio_mode = "auto"

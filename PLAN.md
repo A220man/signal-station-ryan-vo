@@ -1,0 +1,42 @@
+# Product development plan
+
+Each round completes one feature or repair. Future items are planned, not implemented claims.
+
+## Current round
+
+session-goal-orchestrator
+
+## Roadmap
+
+### session-goal-orchestrator — Agent Session & Goal Orchestration with Sandboxing, Patch Resilience, and Compaction
+
+Status: done
+
+Acceptance:
+- Initialize coding agent session with workspace path, model metadata, and sandboxed file isolation
+- Persist and track session goals with token and time budgeting, verification checks, and state transitions
+- Execute agent tool calls (file reading, writing, command execution) through security sandbox and policy boundary
+- Apply whitespace-tolerant patch edits when exact code matching fails due to LLM indentation differences
+- Compact superseded event log snapshots to prevent unbounded database growth and report reclaimed bytes
+- Execute reproducible AI/ML offline evaluation benchmark and generate safety, resilience, and goal metrics
+
+Implementation: `backend/app/main.py`, `backend/app/core/config.py`, `backend/app/core/database.py`, `backend/app/core/security.py`, `backend/app/models/schemas.py`, `backend/app/services/session_service.py`, `backend/app/services/sandbox_service.py`, `backend/app/services/patch_service.py`, `backend/app/services/compaction_service.py`, `backend/app/services/llm_service.py`, `backend/app/services/evaluation_service.py`, `backend/app/api/routes.py`, `frontend/src/App.tsx`, `frontend/src/api/client.ts`, `frontend/src/components/Dashboard.tsx`, `frontend/src/components/SessionDetail.tsx`, `frontend/src/components/SandboxInspector.tsx`, `frontend/src/components/PatchStudio.tsx`, `frontend/src/components/CompactionManager.tsx`, `frontend/src/components/BenchmarkRunner.tsx`, `frontend/src/components/Navbar.tsx`, `frontend/src/components/AuthModal.tsx`
+
+Tests: `backend/tests/test_api.py`, `backend/tests/test_sandbox.py`, `backend/tests/test_patch.py`, `backend/tests/test_compaction.py`, `backend/tests/test_auth.py`, `backend/tests/test_evaluation.py`, `backend/tests/test_integration.py`, `frontend/src/App.test.tsx`, `frontend/src/client.test.ts`
+
+### distributed-agent-fleet — Distributed Multi-Agent Fleet Synchronization
+
+Status: planned
+
+Acceptance:
+- Multi-node agent worker registration with heartbeat health checks
+- Cross-instance session migration and work stealing queue
+
+### neural-patch-synthesizer — Semantic AST Patch Synthesis
+
+Status: planned
+
+Acceptance:
+- Tree-sitter based AST diffing and multi-language semantic replacement
+- Grammar-constrained syntax generation for complex refactors
+
