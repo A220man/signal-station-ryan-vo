@@ -104,3 +104,56 @@ export interface BenchmarkMetrics {
   passedScenarios: number;
   details: Record<string, any>;
 }
+// --- Fleet Worker Types ---
+export type WorkerStatus = "active" | "inactive" | "draining";
+
+export interface Worker {
+  workerId: string;
+  displayName: string;
+  capabilities: string[];
+  maxConcurrentSessions: number;
+  status: WorkerStatus;
+  registeredAt: string;
+  lastHeartbeatAt: string | null;
+  activeSessions: number;
+  totalSessionsHandled: number;
+  metadata: Record<string, any>;
+}
+
+export interface WorkerListResponse {
+  workers: Worker[];
+  total: number;
+  activeCount: number;
+  drainingCount: number;
+  inactiveCount: number;
+}
+
+export interface WorkerRegisterRequest {
+  workerId: string;
+  displayName: string;
+  capabilities?: string[];
+  maxConcurrentSessions?: number;
+  metadata?: Record<string, any>;
+}
+
+export interface WorkerRegisterResponse {
+  workerId: string;
+  registeredAt: string;
+  status: WorkerStatus;
+  heartbeatIntervalSeconds: number;
+}
+
+export interface WorkerHeartbeatRequest {
+  workerId: string;
+  activeSessions?: number;
+  cpuPercent?: number;
+  memoryMb?: number;
+  metadata?: Record<string, any>;
+}
+
+export interface WorkerHeartbeatResponse {
+  workerId: string;
+  acknowledgedAt: string;
+  assignedWork: Record<string, any>[];
+  drainRequested: boolean;
+}

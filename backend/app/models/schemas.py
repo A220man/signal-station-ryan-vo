@@ -171,7 +171,51 @@ class CompactionStatsResponse(BaseModel):
     database_file_size_bytes: int
     superseded_candidate_count: int
 
-# --- AI/ML Evaluation Schemas ---
+# --- Fleet Worker Schemas ---
+class WorkerRegisterRequest(BaseModel):
+    worker_id: str = Field(..., min_length=3, max_length=64, pattern=r"^[a-zA-Z0-9_-]+$")
+    display_name: str = Field(..., min_length=2, max_length=100)
+    capabilities: List[str] = Field(default_factory=list)
+    max_concurrent_sessions: int = Field(default=1, ge=1, le=10)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+class WorkerRegisterResponse(BaseModel):
+    worker_id: str
+    registered_at: str
+    status: Literal["active", "inactive", "draining"]
+    heartbeat_interval_seconds: int
+
+class WorkerHeartbeatRequest(BaseModel):
+    worker_id: str
+    active_sessions: int = Field(default=0, ge=0)
+    cpu_percent: Optional[float] = Field(default=None, ge=0.0, le=100.0)
+    memory_mb: Optional[int] = Field(default=None, ge=0)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+class WorkerHeartbeatResponse(BaseModel):
+    worker_id: str
+    acknowledged_at: str
+    assigned_work: List[Dict[str, Any]] = Field(default_factory=list)
+    drain_requested: bool = False
+
+class WorkerResponse(BaseModel):
+    worker_id: str
+    display_name: str
+    capabilities: List[str]
+    max_concurrent_sessions: int
+    status: Literal["active", "inactive", "draining"]
+    registered_at: str
+    last_heartbeat_at: Optional[str]
+    active_sessions: int
+    total_sessions_handled: int
+    metadata: Dict[str, Any]
+
+class WorkerListResponse(BaseModel):
+    workers: List[WorkerResponse]
+    total: int
+    active_count: int
+    draining_count: int
+    inactive_count: int
 class EvaluationRunRequest(BaseModel):
     run_all: bool = True
 

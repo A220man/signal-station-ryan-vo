@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.0 — work-in-progress checkpoint
+
+Partial code published for continued development. Known issues: STATUS.md.
+
 ## 1.0.0 — work-in-progress checkpoint
 
 Partial code published for continued development. Known issues: STATUS.md.
@@ -21,3 +25,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - React 19 + TypeScript + Vite frontend dashboard with interactive session controls, live buffer search, patch tester, compaction manager, and benchmark runner.
 - Docker and Docker Compose environment with non-root security contexts, healthchecks, and Keycloak realm import.
 - GitHub Actions CI workflow for backend test coverage, frontend typecheck/tests, and container builds.
+
+## [1.0.1] - 2026-10-23
+
+### Added
+- Distributed agent fleet coordination: multi-node worker registration with heartbeat health checks.
+- `FleetService` with worker lifecycle management: register, heartbeat (CPU/memory reporting), drain request, stale detection.
+- Worker status state machine: `active` → `draining` → `inactive` with automatic transition on session completion.
+- SQLite `workers` table with indexes and `work_queue` table for future work stealing.
+- REST API endpoints: `POST /fleet/workers/register`, `POST /fleet/workers/heartbeat`, `GET /fleet/workers`, `GET /fleet/workers/{id}`, `POST /fleet/workers/{id}/drain`, `POST /fleet/maintenance/mark-stale`.
+- Frontend `FleetManager` component with worker table, registration modal, drain controls, stale worker marking.
+- 10 backend tests covering registration, heartbeat, drain, stale detection, and listing.

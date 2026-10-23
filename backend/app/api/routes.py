@@ -1,4 +1,5 @@
 """FastAPI API route definitions and endpoint handlers."""
+import datetime
 import pathlib
 from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -11,7 +12,7 @@ from app.models.schemas import *
 from app.services.session_service import SessionService
 from app.services.sandbox_service import SandboxService
 from app.services.patch_service import PatchService
-from app.services.compaction_service import CompactionService
+from app.services.fleet_service import FleetService
 from app.services.evaluation_service import EvaluationService
 
 router = APIRouter(prefix="/api")
@@ -130,6 +131,60 @@ async def run_evaluation(payload: EvaluationRunRequest, request: Request, user: 
 async def get_evaluation_history(limit: int = 10, user: AuthenticatedUser = Depends(require_role(ROLE_VIEWER))):
     return EvaluationHistoryResponse(**EvaluationService.get_history(limit=limit))
 
+@router.post("/fleet/workers/register", response_model=WorkerRegisterResponse)
+async def register_worker(payload: WorkerRegisterRequest, request: Request, user: AuthenticatedUser = Depends(require_role(ROLE_OPERATOR))):
+    res = FleetService.register_worker(
+        worker_id=payload.worker_id,
+        display_name=payload.display_name,
+        capabilities=payload.capabilities,
+        max_concurrent_sessions=payload.max_concurrent_sessions,
+        metadata=payload.metadata,
+    )
+    if not res:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Worker registration failed")
+    return WorkerRegisterResponse(
+        worker_id=res["worker_id"],
+        registered_at=res["registered_at"],
+        status=res["status"],
+        heartbeat_interval_seconds=FleetService.HEARTBEAT_INTERVAL_SECONDS,
+    )
+
+@router.post("/fleet/workers/heartbeat", response_model=WorkerHeartbeatResponse)
+async def worker_heartbeat(payload: WorkerHeartbeatRequest, request: Request, user: AuthenticatedUser = Depends(require_role(ROLE_OPERATOR))):
+    try:
+        res = FleetService.heartbeat(
+            worker_id=payload.worker_id,
+            active_sessions=payload.active_sessions,
+            cpu_percent=payload.cpu_percent,
+            memory_mb=payload.memory_mb,
+            metadata=payload.metadata,
+        )
+        return WorkerHeartbeatResponse(**res)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+@router.get("/fleet/workers", response_model=WorkerListResponse)
+async def list_workers(user: AuthenticatedUser = Depends(require_role(ROLE_VIEWER))):
+    return WorkerListResponse(**FleetService.list_workers())
+
+@router.get("/fleet/workers/{worker_id}", response_model=WorkerResponse)
+async def get_worker(worker_id: str, user: AuthenticatedUser = Depends(require_role(ROLE_VIEWER))):
+    worker = FleetService.get_worker(worker_id)
+    if not worker:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Worker '{worker_id}' not found")
+    return WorkerResponse(**worker)
+
+@router.post("/fleet/workers/{worker_id}/drain", response_model=WorkerResponse)
+async def request_worker_drain(worker_id: str, request: Request, user: AuthenticatedUser = Depends(require_role(ROLE_ADMIN))):
+    worker = FleetService.request_drain(worker_id)
+    if not worker:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Worker '{worker_id}' not found")
+    return WorkerResponse(**worker)
+
+@router.post("/fleet/maintenance/mark-stale", response_model=Dict[str, Any])
+async def mark_stale_workers(request: Request, user: AuthenticatedUser = Depends(require_role(ROLE_ADMIN))):
+    count = FleetService.mark_inactive_stale()
+    return {"marked_inactive": count, "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat()}
 @router.get("/audit/logs", response_model=List[AuditLogResponse])
 async def list_audit_logs(limit: int = 50, user: AuthenticatedUser = Depends(require_role(ROLE_VIEWER))):
     conn = get_connection()
