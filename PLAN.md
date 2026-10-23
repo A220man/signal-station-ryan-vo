@@ -26,11 +26,15 @@ Tests: `backend/tests/test_api.py`, `backend/tests/test_sandbox.py`, `backend/te
 
 ### distributed-agent-fleet — Distributed Multi-Agent Fleet Synchronization
 
-Status: planned
+Status: in_progress
 
 Acceptance:
 - Multi-node agent worker registration with heartbeat health checks
 - Cross-instance session migration and work stealing queue
+
+Implementation: `backend/app/services/fleet_service.py`, `backend/app/api/routes.py`, `backend/app/models/schemas.py`, `backend/app/core/database.py`, `frontend/src/components/FleetManager.tsx`, `frontend/src/api/client.ts`, `frontend/src/types/index.ts`, `frontend/src/components/Navbar.tsx`, `frontend/src/App.tsx`
+
+Tests: `backend/tests/test_fleet.py`
 
 ### neural-patch-synthesizer — Semantic AST Patch Synthesis
 

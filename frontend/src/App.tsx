@@ -7,6 +7,7 @@ import { SessionDetail } from "./components/SessionDetail";
 import { PatchStudio } from "./components/PatchStudio";
 import { SandboxInspector } from "./components/SandboxInspector";
 import { CompactionManager } from "./components/CompactionManager";
+import { FleetManager } from "./components/FleetManager";
 import { BenchmarkRunner } from "./components/BenchmarkRunner";
 import { AuthModal } from "./components/AuthModal";
 import "./App.css";
@@ -57,6 +58,8 @@ export const App: React.FC = () => {
         {activeTab === "compaction" && <CompactionManager />}
 
         {activeTab === "benchmark" && <BenchmarkRunner />}
+
+        {activeTab === "fleet" && <FleetManager />}
       </main>
 
       <footer className="app-footer">

@@ -1,4 +1,4 @@
-import { UserRole, Session, Goal, AgentStep, PatchResult, RiskCheckResult, PathContainmentResult, CompactionStats, CompactionResult, BenchmarkMetrics } from "../types";
+import { UserRole, Session, Goal, AgentStep, PatchResult, RiskCheckResult, PathContainmentResult, CompactionStats, CompactionResult, BenchmarkMetrics, Worker, WorkerListResponse, WorkerRegisterRequest, WorkerRegisterResponse, WorkerHeartbeatRequest, WorkerHeartbeatResponse } from "../types";
 
 let inMemoryToken: string | null = null;
 let currentUserRole: UserRole = "operator";
@@ -82,7 +82,31 @@ export const api = {
   async getBenchmarkHistory(): Promise<{ runs: BenchmarkMetrics[]; baselineComparison: any }> {
     const d = await req<any>("/api/evaluation/history");
     return { runs: d.runs.map(tBench), baselineComparison: d.baseline_comparison };
-  }
+  },
+
+  async registerWorker(payload: WorkerRegisterRequest): Promise<WorkerRegisterResponse> {
+    return req<WorkerRegisterResponse>("/api/fleet/workers/register", { method: "POST", body: JSON.stringify(payload) });
+  },
+
+  async workerHeartbeat(payload: WorkerHeartbeatRequest): Promise<WorkerHeartbeatResponse> {
+    return req<WorkerHeartbeatResponse>("/api/fleet/workers/heartbeat", { method: "POST", body: JSON.stringify(payload) });
+  },
+
+  async listWorkers(): Promise<WorkerListResponse> {
+    return req<WorkerListResponse>("/api/fleet/workers");
+  },
+
+  async getWorker(id: string): Promise<Worker> {
+    return req<Worker>(`/api/fleet/workers/${id}`);
+  },
+
+  async requestWorkerDrain(id: string): Promise<Worker> {
+    return req<Worker>(`/api/fleet/workers/${id}/drain`, { method: "POST" });
+  },
+
+  async markStaleWorkers(): Promise<{ marked_inactive: number; timestamp: string }> {
+    return req<{ marked_inactive: number; timestamp: string }>("/api/fleet/maintenance/mark-stale", { method: "POST" });
+  },
 };
 
 function tSession(s: any): Session {

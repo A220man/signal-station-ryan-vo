@@ -153,13 +153,51 @@ def init_db(conn: Optional[sqlite3.Connection] = None) -> None:
             );
             """)
 
+            # Fleet worker coordination tables
+            conn.execute("""
+            CREATE TABLE IF NOT EXISTS workers (
+                worker_id TEXT PRIMARY KEY,
+                display_name TEXT NOT NULL,
+                capabilities TEXT NOT NULL DEFAULT '[]',
+                max_concurrent_sessions INTEGER NOT NULL DEFAULT 1,
+                metadata TEXT NOT NULL DEFAULT '{}',
+                status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'draining')),
+                registered_at TEXT NOT NULL,
+                last_heartbeat_at TEXT,
+                active_sessions INTEGER NOT NULL DEFAULT 0,
+                total_sessions_handled INTEGER NOT NULL DEFAULT 0,
+                cpu_percent REAL,
+                memory_mb INTEGER,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+            """)
+
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_workers_status ON workers(status);")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_workers_last_heartbeat ON workers(last_heartbeat_at);")
+
+            conn.execute("""
+            CREATE TABLE IF NOT EXISTS work_queue (
+                id TEXT PRIMARY KEY,
+                session_id TEXT NOT NULL,
+                task_type TEXT NOT NULL,
+                payload TEXT NOT NULL,
+                priority INTEGER NOT NULL DEFAULT 0,
+                status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'assigned', 'completed', 'failed')),
+                assigned_worker_id TEXT,
+                created_at TEXT NOT NULL,
+                assigned_at TEXT,
+                completed_at TEXT,
+                FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE,
+                FOREIGN KEY (assigned_worker_id) REFERENCES workers(worker_id) ON DELETE SET NULL
+            );
+            """)
+
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_work_queue_status ON work_queue(status);")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_work_queue_worker ON work_queue(assigned_worker_id);")
+
             # Indexes for high performance querying
             conn.execute("CREATE INDEX IF NOT EXISTS idx_sessions_archived ON sessions(is_archived);")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_goals_session ON goals(session_id);")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_steps_session ON steps(session_id);")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_events_aggregate ON events(aggregate_id, seq);")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_events_type ON events(event_type);")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_logs(created_at);")
     finally:
         if close_after:
             conn.close()

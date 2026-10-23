@@ -19,7 +19,8 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: "patch", label: "Patch Resilience" },
     { id: "sandbox", label: "Safety Sandbox" },
     { id: "compaction", label: "Event Compaction" },
-    { id: "benchmark", label: "AI/ML Benchmark" }
+    { id: "benchmark", label: "AI/ML Benchmark" },
+    { id: "fleet", label: "Agent Fleet" }
   ];
 
   return (
