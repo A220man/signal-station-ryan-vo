@@ -3,6 +3,7 @@ import pytest
 import os
 import httpx
 from app.core.config import settings
+from app.core import database as db_module
 from app.core.database import init_db
 from app.core.security import create_demo_token, ROLE_VIEWER, ROLE_OPERATOR, ROLE_ADMIN
 from app.main import app
@@ -10,13 +11,19 @@ from app.main import app
 @pytest.fixture(autouse=True)
 def setup_test_db(monkeypatch):
     """Ensure in-memory SQLite database for isolated test execution."""
+    # Reset the shared in-memory connection for test isolation
+    if db_module._mem_keepalive is not None:
+        db_module._mem_keepalive.close()
+        db_module._mem_keepalive = None
     monkeypatch.setattr(settings, "database_path", "sqlite:///:memory:")
     monkeypatch.setattr(settings, "app_env", "development")
     monkeypatch.setattr(settings, "demo_mode", True)
     init_db()
     yield
-
-@pytest.fixture
+    # Clean up after test
+    if db_module._mem_keepalive is not None:
+        db_module._mem_keepalive.close()
+        db_module._mem_keepalive = None
 def viewer_token():
     return create_demo_token(username="test_viewer", role=ROLE_VIEWER)
 

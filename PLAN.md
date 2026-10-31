@@ -26,7 +26,7 @@ Tests: `backend/tests/test_api.py`, `backend/tests/test_sandbox.py`, `backend/te
 
 ### distributed-agent-fleet — Distributed Multi-Agent Fleet Synchronization
 
-Status: in_progress
+Status: done
 
 Acceptance:
 - Multi-node agent worker registration with heartbeat health checks
