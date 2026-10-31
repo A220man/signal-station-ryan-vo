@@ -25,35 +25,34 @@ def get_connection() -> sqlite3.Connection:
     global _mem_keepalive
     db_p = get_db_path()
     if db_p == ":memory:":
-        uri_str = "file:memdb?mode=memory&cache=shared"
         if _mem_keepalive is None:
-            _mem_keepalive = sqlite3.connect(uri_str, uri=True)
+            uri_str = "file:memdb?mode=memory&cache=shared"
+            _mem_keepalive = sqlite3.connect(uri_str, uri=True, timeout=15.0)
+            _mem_keepalive.row_factory = sqlite3.Row
             _mem_keepalive.execute("PRAGMA foreign_keys = ON;")
-        conn = sqlite3.connect(uri_str, uri=True, timeout=15.0)
+        return _mem_keepalive
     else:
         conn = sqlite3.connect(db_p, timeout=15.0)
+        conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA journal_mode = WAL;")
-
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON;")
-    return conn
+        conn.execute("PRAGMA foreign_keys = ON;")
+        return conn
 
 @contextlib.contextmanager
 def transaction(conn: Optional[sqlite3.Connection] = None) -> Generator[sqlite3.Connection, None, None]:
     """Provide a transactional boundary with automatic commit or rollback."""
-    should_close = False
+    close_after = False
     if conn is None:
         conn = get_connection()
-        should_close = True
+        close_after = True
     try:
-        conn.execute("BEGIN IMMEDIATE;")
         yield conn
         conn.commit()
     except Exception:
         conn.rollback()
         raise
     finally:
-        if should_close:
+        if close_after and get_db_path() != ":memory:":
             conn.close()
 
 def init_db(conn: Optional[sqlite3.Connection] = None) -> None:
@@ -188,18 +187,18 @@ def init_db(conn: Optional[sqlite3.Connection] = None) -> None:
                 created_at TEXT NOT NULL,
                 assigned_at TEXT,
                 completed_at TEXT,
-                FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE,
                 FOREIGN KEY (assigned_worker_id) REFERENCES workers(worker_id) ON DELETE SET NULL
             );
             """)
 
             conn.execute("CREATE INDEX IF NOT EXISTS idx_work_queue_status ON work_queue(status);")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_work_queue_worker ON work_queue(assigned_worker_id);")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_work_queue_session ON work_queue(session_id);")
 
             # Indexes for high performance querying
             conn.execute("CREATE INDEX IF NOT EXISTS idx_sessions_archived ON sessions(is_archived);")
     finally:
-        if close_after:
+        if close_after and get_db_path() != ":memory:":
             conn.close()
 
 def log_audit(
@@ -215,16 +214,19 @@ def log_audit(
     import uuid
     log_id = f"aud_{uuid.uuid4().hex[:12]}"
     now = datetime.datetime.now(datetime.timezone.utc).isoformat()
-    
-    query = """
-    INSERT INTO audit_logs (id, user_id, action, target_type, target_id, details, ip_address, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?);
-    """
-    params = (log_id, user_id, action, target_type, target_id, details, ip_address, now)
-
-    if conn is not None:
-        conn.execute(query, params)
-    else:
-        with transaction() as tx_conn:
-            tx_conn.execute(query, params)
+    close_after = False
+    if conn is None:
+        conn = get_connection()
+        close_after = True
+    try:
+        conn.execute(
+            """INSERT INTO audit_logs (id, user_id, action, target_type, target_id, details, ip_address, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (log_id, user_id, action, target_type, target_id, details, ip_address, now)
+        )
+        if close_after:
+            conn.commit()
+    finally:
+        if close_after and get_db_path() != ":memory:":
+            conn.close()
     return log_id

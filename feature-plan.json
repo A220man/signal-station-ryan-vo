@@ -53,7 +53,7 @@
     {
       "id": "distributed-agent-fleet",
       "title": "Distributed Multi-Agent Fleet Synchronization",
-      "status": "in_progress",
+      "status": "done",
       "acceptance": [
         "Multi-node agent worker registration with heartbeat health checks",
         "Cross-instance session migration and work stealing queue"

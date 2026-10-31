@@ -185,6 +185,62 @@ async def request_worker_drain(worker_id: str, request: Request, user: Authentic
 async def mark_stale_workers(request: Request, user: AuthenticatedUser = Depends(require_role(ROLE_ADMIN))):
     count = FleetService.mark_inactive_stale()
     return {"marked_inactive": count, "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat()}
+
+# --- Work Queue Endpoints ---
+@router.post("/fleet/work-queue/enqueue", response_model=WorkItemResponse)
+async def enqueue_work(payload: WorkItemCreate, request: Request, user: AuthenticatedUser = Depends(require_role(ROLE_OPERATOR))):
+    res = FleetService.enqueue_work(
+        session_id=payload.session_id,
+        task_type=payload.task_type,
+        payload=payload.payload,
+        priority=payload.priority,
+    )
+    if not res:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to enqueue work")
+    return WorkItemResponse(**res)
+
+@router.get("/fleet/work-queue/pending", response_model=WorkItemListResponse)
+async def list_pending_work(session_id: Optional[str] = None, user: AuthenticatedUser = Depends(require_role(ROLE_VIEWER))):
+    items = FleetService.list_pending_work(session_id=session_id)
+    return WorkItemListResponse(items=items, total=len(items))
+
+@router.post("/fleet/work-queue/assign", response_model=WorkItemResponse)
+async def assign_work(payload: WorkAssignRequest, request: Request, user: AuthenticatedUser = Depends(require_role(ROLE_OPERATOR))):
+    res = FleetService.assign_work_to_worker(payload.worker_id, payload.work_id)
+    if not res:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Work item not found, worker not active, or worker at capacity")
+    return WorkItemResponse(**res)
+
+@router.post("/fleet/work-queue/steal", response_model=List[WorkItemResponse])
+async def steal_work(payload: WorkStealRequest, request: Request, user: AuthenticatedUser = Depends(require_role(ROLE_OPERATOR))):
+    stolen = FleetService.steal_work(payload.worker_id, payload.max_items)
+    return [WorkItemResponse(**item) for item in stolen]
+
+@router.post("/fleet/work-queue/complete", response_model=WorkCompleteResponse)
+async def complete_work(payload: WorkCompleteRequest, request: Request, user: AuthenticatedUser = Depends(require_role(ROLE_OPERATOR))):
+    res = FleetService.complete_work(payload.work_id, payload.worker_id, payload.success)
+    if not res:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Work item not found or not assigned to worker")
+    return WorkCompleteResponse(
+        work_id=res["id"],
+        status=res["status"],
+        completed_at=res["completed_at"] or datetime.datetime.now(datetime.timezone.utc).isoformat(),
+    )
+
+@router.post("/fleet/work-queue/migrate", response_model=SessionMigrateResponse)
+async def migrate_session_work(payload: SessionMigrateRequest, request: Request, user: AuthenticatedUser = Depends(require_role(ROLE_ADMIN))):
+    res = FleetService.migrate_session_work(payload.session_id, payload.from_worker_id, payload.to_worker_id)
+    if "error" in res:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=res["error"])
+    return SessionMigrateResponse(**res)
+
+@router.get("/fleet/workers/{worker_id}/workload", response_model=WorkerWorkloadResponse)
+async def get_worker_workload(worker_id: str, user: AuthenticatedUser = Depends(require_role(ROLE_VIEWER))):
+    workload = FleetService.get_worker_workload(worker_id)
+    if "error" in workload:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=workload["error"])
+    return WorkerWorkloadResponse(**workload)
+
 @router.get("/audit/logs", response_model=List[AuditLogResponse])
 async def list_audit_logs(limit: int = 50, user: AuthenticatedUser = Depends(require_role(ROLE_VIEWER))):
     conn = get_connection()

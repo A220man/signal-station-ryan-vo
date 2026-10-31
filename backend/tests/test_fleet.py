@@ -7,15 +7,12 @@ import datetime
 
 @pytest.fixture(autouse=True)
 def setup_db():
-    """Initialize database and fleet tables for each test."""
-    init_db()
+    """Initialize fleet tables for each test."""
     init_fleet_tables()
     # Clean up workers table
     with transaction() as conn:
         conn.execute("DELETE FROM workers")
     yield
-    with transaction() as conn:
-        conn.execute("DELETE FROM workers")
 
 
 def test_register_worker():

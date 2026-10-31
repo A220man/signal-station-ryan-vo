@@ -157,3 +157,89 @@ export interface WorkerHeartbeatResponse {
   assignedWork: Record<string, any>[];
   drainRequested: boolean;
 }
+
+// --- Work Queue Types ---
+export type WorkItemStatus = "pending" | "assigned" | "completed" | "failed";
+
+export interface WorkItem {
+  id: string;
+  sessionId: string;
+  taskType: string;
+  payload: Record<string, any>;
+  priority: number;
+  status: WorkItemStatus;
+  assignedWorkerId?: string | null;
+  createdAt: string;
+  assignedAt?: string | null;
+  completedAt?: string | null;
+}
+
+export interface WorkItemCreate {
+  sessionId: string;
+  taskType: string;
+  payload?: Record<string, any>;
+  priority?: number;
+}
+
+export interface WorkItemResponse {
+  id: string;
+  sessionId: string;
+  taskType: string;
+  payload: Record<string, any>;
+  priority: number;
+  status: WorkItemStatus;
+  assignedWorkerId?: string | null;
+  createdAt: string;
+  assignedAt?: string | null;
+  completedAt?: string | null;
+}
+
+export interface WorkItemListResponse {
+  items: WorkItemResponse[];
+  total: number;
+}
+
+export interface WorkAssignRequest {
+  workerId: string;
+  workId: string;
+}
+
+export interface WorkStealRequest {
+  workerId: string;
+  maxItems?: number;
+}
+
+export interface WorkCompleteRequest {
+  workerId: string;
+  workId: string;
+  success?: boolean;
+}
+
+export interface WorkCompleteResponse {
+  workId: string;
+  status: "completed" | "failed";
+  completedAt: string;
+}
+
+export interface SessionMigrateRequest {
+  sessionId: string;
+  fromWorkerId: string;
+  toWorkerId: string;
+}
+
+export interface SessionMigrateResponse {
+  migrated: number;
+  sessionId: string;
+  fromWorker: string;
+  toWorker: string;
+  error?: string;
+}
+
+export interface WorkerWorkloadResponse {
+  workerId: string;
+  status: WorkerStatus;
+  maxConcurrentSessions: number;
+  activeSessions: number;
+  availableSlots: number;
+  assignedWork: WorkItemResponse[];
+}

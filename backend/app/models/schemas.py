@@ -216,6 +216,68 @@ class WorkerListResponse(BaseModel):
     active_count: int
     draining_count: int
     inactive_count: int
+
+# --- Work Queue Schemas ---
+class WorkItemCreate(BaseModel):
+    session_id: str = Field(..., min_length=3, max_length=64)
+    task_type: str = Field(..., min_length=2, max_length=50)
+    payload: Dict[str, Any] = Field(default_factory=dict)
+    priority: int = Field(default=0, ge=0, le=100)
+
+class WorkItemResponse(BaseModel):
+    id: str
+    session_id: str
+    task_type: str
+    payload: Dict[str, Any]
+    priority: int
+    status: Literal["pending", "assigned", "completed", "failed"]
+    assigned_worker_id: Optional[str]
+    created_at: str
+    assigned_at: Optional[str]
+    completed_at: Optional[str]
+
+class WorkItemListResponse(BaseModel):
+    items: List[WorkItemResponse]
+    total: int
+
+class WorkAssignRequest(BaseModel):
+    worker_id: str
+    work_id: str
+
+class WorkStealRequest(BaseModel):
+    worker_id: str
+    max_items: int = Field(default=1, ge=1, le=10)
+
+class WorkCompleteRequest(BaseModel):
+    worker_id: str
+    work_id: str
+    success: bool = True
+
+class WorkCompleteResponse(BaseModel):
+    work_id: str
+    status: Literal["completed", "failed"]
+    completed_at: str
+
+class SessionMigrateRequest(BaseModel):
+    session_id: str
+    from_worker_id: str
+    to_worker_id: str
+
+class SessionMigrateResponse(BaseModel):
+    migrated: int
+    session_id: str
+    from_worker: str
+    to_worker: str
+    error: Optional[str] = None
+
+class WorkerWorkloadResponse(BaseModel):
+    worker_id: str
+    status: Literal["active", "inactive", "draining"]
+    max_concurrent_sessions: int
+    active_sessions: int
+    available_slots: int
+    assigned_work: List[WorkItemResponse]
+
 class EvaluationRunRequest(BaseModel):
     run_all: bool = True
 

@@ -1,4 +1,4 @@
-import { UserRole, Session, Goal, AgentStep, PatchResult, RiskCheckResult, PathContainmentResult, CompactionStats, CompactionResult, BenchmarkMetrics, Worker, WorkerListResponse, WorkerRegisterRequest, WorkerRegisterResponse, WorkerHeartbeatRequest, WorkerHeartbeatResponse } from "../types";
+import { UserRole, Session, Goal, AgentStep, PatchResult, RiskCheckResult, PathContainmentResult, CompactionStats, CompactionResult, BenchmarkMetrics, Worker, WorkerListResponse, WorkerRegisterRequest, WorkerRegisterResponse, WorkerHeartbeatRequest, WorkerHeartbeatResponse, WorkItem, WorkItemCreate, WorkItemResponse, WorkItemListResponse, WorkAssignRequest, WorkStealRequest, WorkCompleteRequest, WorkCompleteResponse, SessionMigrateRequest, SessionMigrateResponse, WorkerWorkloadResponse } from "../types";
 
 let inMemoryToken: string | null = null;
 let currentUserRole: UserRole = "operator";
@@ -106,6 +106,36 @@ export const api = {
 
   async markStaleWorkers(): Promise<{ marked_inactive: number; timestamp: string }> {
     return req<{ marked_inactive: number; timestamp: string }>("/api/fleet/maintenance/mark-stale", { method: "POST" });
+  },
+
+  // --- Work Queue Methods ---
+  async enqueueWork(payload: WorkItemCreate): Promise<WorkItemResponse> {
+    return req<WorkItemResponse>("/api/fleet/work-queue/enqueue", { method: "POST", body: JSON.stringify(payload) });
+  },
+
+  async listPendingWork(sessionId?: string): Promise<WorkItemListResponse> {
+    const url = sessionId ? `/api/fleet/work-queue/pending?session_id=${encodeURIComponent(sessionId)}` : "/api/fleet/work-queue/pending";
+    return req<WorkItemListResponse>(url);
+  },
+
+  async assignWork(payload: WorkAssignRequest): Promise<WorkItemResponse> {
+    return req<WorkItemResponse>("/api/fleet/work-queue/assign", { method: "POST", body: JSON.stringify(payload) });
+  },
+
+  async stealWork(payload: WorkStealRequest): Promise<WorkItemResponse[]> {
+    return req<WorkItemResponse[]>("/api/fleet/work-queue/steal", { method: "POST", body: JSON.stringify(payload) });
+  },
+
+  async completeWork(payload: WorkCompleteRequest): Promise<WorkCompleteResponse> {
+    return req<WorkCompleteResponse>("/api/fleet/work-queue/complete", { method: "POST", body: JSON.stringify(payload) });
+  },
+
+  async migrateSessionWork(payload: SessionMigrateRequest): Promise<SessionMigrateResponse> {
+    return req<SessionMigrateResponse>("/api/fleet/work-queue/migrate", { method: "POST", body: JSON.stringify(payload) });
+  },
+
+  async getWorkerWorkload(workerId: string): Promise<WorkerWorkloadResponse> {
+    return req<WorkerWorkloadResponse>(`/api/fleet/workers/${workerId}/workload`);
   },
 };
 
