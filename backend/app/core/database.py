@@ -18,6 +18,10 @@ def get_db_path() -> str:
     p.parent.mkdir(parents=True, exist_ok=True)
     return str(p)
 
+def is_in_memory_db() -> bool:
+    """Check if the current database configuration is in-memory."""
+    return get_db_path() == ":memory:"
+
 _mem_keepalive: Optional[sqlite3.Connection] = None
 
 def get_connection() -> sqlite3.Connection:
@@ -44,7 +48,8 @@ def transaction(conn: Optional[sqlite3.Connection] = None) -> Generator[sqlite3.
     close_after = False
     if conn is None:
         conn = get_connection()
-        close_after = True
+        # Only close disk connections after transaction; in-memory connection is reused
+        close_after = get_db_path() != ":memory:"
     try:
         yield conn
         conn.commit()
@@ -52,7 +57,7 @@ def transaction(conn: Optional[sqlite3.Connection] = None) -> Generator[sqlite3.
         conn.rollback()
         raise
     finally:
-        if close_after and get_db_path() != ":memory:":
+        if close_after:
             conn.close()
 
 def init_db(conn: Optional[sqlite3.Connection] = None) -> None:
@@ -60,7 +65,7 @@ def init_db(conn: Optional[sqlite3.Connection] = None) -> None:
     close_after = False
     if conn is None:
         conn = get_connection()
-        close_after = True
+        close_after = get_db_path() != ":memory:"
 
     try:
         with conn:
@@ -198,7 +203,7 @@ def init_db(conn: Optional[sqlite3.Connection] = None) -> None:
             # Indexes for high performance querying
             conn.execute("CREATE INDEX IF NOT EXISTS idx_sessions_archived ON sessions(is_archived);")
     finally:
-        if close_after and get_db_path() != ":memory:":
+        if close_after:
             conn.close()
 
 def log_audit(
@@ -217,7 +222,7 @@ def log_audit(
     close_after = False
     if conn is None:
         conn = get_connection()
-        close_after = True
+        close_after = get_db_path() != ":memory:"
     try:
         conn.execute(
             """INSERT INTO audit_logs (id, user_id, action, target_type, target_id, details, ip_address, created_at)

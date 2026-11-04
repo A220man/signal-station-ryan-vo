@@ -4,7 +4,7 @@ import os
 import httpx
 from app.core.config import settings
 from app.core import database as db_module
-from app.core.database import init_db
+from app.core.database import init_db, get_connection
 from app.core.security import create_demo_token, ROLE_VIEWER, ROLE_OPERATOR, ROLE_ADMIN
 from app.main import app
 
@@ -18,12 +18,15 @@ def setup_test_db(monkeypatch):
     monkeypatch.setattr(settings, "database_path", "sqlite:///:memory:")
     monkeypatch.setattr(settings, "app_env", "development")
     monkeypatch.setattr(settings, "demo_mode", True)
+    # Initialize database tables
     init_db()
     yield
     # Clean up after test
     if db_module._mem_keepalive is not None:
         db_module._mem_keepalive.close()
         db_module._mem_keepalive = None
+
+@pytest.fixture
 def viewer_token():
     return create_demo_token(username="test_viewer", role=ROLE_VIEWER)
 

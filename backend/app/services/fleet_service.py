@@ -358,7 +358,9 @@ class FleetService:
                     "UPDATE workers SET active_sessions = active_sessions + 1, total_sessions_handled = total_sessions_handled + 1 WHERE worker_id = ?",
                     (worker_id,),
                 )
-                stolen.append(cls._row_to_work_item(row))
+                # Re-fetch the work item to get updated assigned_worker_id
+                updated_row = conn.execute("SELECT * FROM work_queue WHERE id = ?", (work_id,)).fetchone()
+                stolen.append(cls._row_to_work_item(updated_row))
 
         return stolen
 

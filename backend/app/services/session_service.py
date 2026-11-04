@@ -5,7 +5,7 @@ import json
 import pathlib
 import datetime
 from typing import Dict, Any, List, Optional
-from app.core.database import transaction, get_connection
+from app.core.database import transaction, get_connection, is_in_memory_db
 from app.services.sandbox_service import SandboxService
 from app.services.patch_service import PatchService
 from app.services.llm_service import LLMService
@@ -66,7 +66,8 @@ class SessionService:
             session["step_count"] = conn.execute("SELECT COUNT(*) FROM steps WHERE session_id = ?;", (session_id,)).fetchone()[0]
             return session
         finally:
-            conn.close()
+            if not is_in_memory_db():
+                conn.close()
 
     @classmethod
     def list_sessions(cls, include_archived: bool = False, status_filter: Optional[str] = None, search_query: Optional[str] = None, page: int = 1, page_size: int = 20) -> Dict[str, Any]:
@@ -90,7 +91,8 @@ class SessionService:
             items = [cls.get_session(r[0]) for r in conn.execute(query, params).fetchall()]
             return {"items": [i for i in items if i], "total": total, "page": page, "page_size": page_size}
         finally:
-            conn.close()
+            if not is_in_memory_db():
+                conn.close()
 
     @classmethod
     def toggle_archive(cls, session_id: str, archive_status: bool) -> Optional[Dict[str, Any]]:
@@ -221,7 +223,8 @@ class SessionService:
             results = [{"step_id": r[0], "step_number": r[1], "tool_name": r[2], "input_data": json.loads(r[3]), "output_data": json.loads(r[4]), "created_at": r[5]} for r in cursor.fetchall()]
             return {"query": query, "matches_count": len(results), "results": results}
         finally:
-            conn.close()
+            if not is_in_memory_db():
+                conn.close()
 
     @staticmethod
     def _record_event(conn, aggregate_id: str, event_type: str, data: Dict[str, Any]) -> str:
