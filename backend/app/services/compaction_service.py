@@ -4,7 +4,7 @@ import json
 import sqlite3
 import datetime
 from typing import Dict, Any, List, Optional
-from app.core.database import transaction, get_connection, get_db_path
+from app.core.database import transaction, get_connection, get_db_path, is_in_memory_db
 
 SUPERSEDED_TYPES = [
     "message.updated.1",
@@ -62,7 +62,8 @@ class CompactionService:
                 "superseded_candidate_count": superseded_count
             }
         finally:
-            conn.close()
+            if not is_in_memory_db():
+                conn.close()
 
     @classmethod
     def compact_events(

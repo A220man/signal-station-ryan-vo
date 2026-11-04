@@ -2,6 +2,7 @@
 import pytest
 import json
 from app.services.fleet_service import FleetService
+from app.core.database import is_in_memory_db
 
 
 @pytest.fixture(autouse=True)
@@ -14,7 +15,8 @@ def setup_db():
         conn.execute("DELETE FROM work_queue")
         conn.execute("DELETE FROM workers")
     finally:
-        conn.close()
+        if not is_in_memory_db():
+            conn.close()
 
 
 def test_enqueue_work():
@@ -189,7 +191,7 @@ def test_complete_work_wrong_worker():
 
 def test_migrate_session_work():
     """Test migrating session work from one worker to another."""
-    FleetService.register_worker("worker1", "Worker 1", ["coding"], 2, {})
+    FleetService.register_worker("worker1", "Worker 1", ["coding"], 3, {})
     FleetService.register_worker("worker2", "Worker 2", ["testing"], 2, {})
     
     work1 = FleetService.enqueue_work("ses_1", "task1", {})
