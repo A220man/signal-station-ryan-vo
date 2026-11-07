@@ -108,6 +108,22 @@ async def check_path_containment(payload: PathContainmentRequest, user: Authenti
     ws = payload.workspace_root or "workspace_default"
     contained, canon, msg = SandboxService.verify_path_containment(ws, payload.target_path)
     return PathContainmentResponse(target_path=payload.target_path, workspace_root=ws, is_contained=contained, canonical_path=canon, error_message=msg if not contained else None)
+@router.post("/sandbox/execute", response_model=CommandExecuteResponse)
+async def execute_sandboxed_command(payload: CommandExecuteRequest, request: Request, user: AuthenticatedUser = Depends(require_role(ROLE_OPERATOR))):
+    ws = payload.workspace_root or "workspace_default"
+    result = SandboxService.execute_sandboxed_command(ws, payload.command, payload.timeout_seconds)
+    # Include the risk assessment in the response
+    risk = result.get("risk_assessment", {})
+    return CommandExecuteResponse(
+        command=payload.command,
+        workspace_root=ws,
+        exit_code=result["exit_code"],
+        stdout=result["stdout"],
+        stderr=result["stderr"],
+        risk_level=risk.get("risk_level", "SAFE"),
+        safe_to_execute=risk.get("safe_to_execute", True),
+        flagged_patterns=risk.get("flagged_patterns", [])
+    )
 
 @router.get("/compaction/stats", response_model=CompactionStatsResponse)
 async def get_compaction_stats(user: AuthenticatedUser = Depends(require_role(ROLE_VIEWER))):

@@ -150,7 +150,21 @@ class PathContainmentResponse(BaseModel):
     canonical_path: str
     error_message: Optional[str] = None
 
-# --- Compaction Schemas ---
+class CommandExecuteRequest(BaseModel):
+    command: str
+    workspace_root: Optional[str] = None
+    timeout_seconds: int = Field(default=15, ge=1, le=300)
+
+class CommandExecuteResponse(BaseModel):
+    command: str
+    workspace_root: str
+    exit_code: int
+    stdout: str
+    stderr: str
+    risk_level: Literal["SAFE", "GUARDED", "PROHIBITED"]
+    safe_to_execute: bool
+    flagged_patterns: List[str]
+
 class CompactionRunRequest(BaseModel):
     session_id: Optional[str] = None
     prune_superseded_snapshots: bool = True

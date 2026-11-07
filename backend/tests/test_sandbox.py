@@ -55,3 +55,28 @@ def test_execute_sandboxed_command_interception(tmp_path):
     blocked = SandboxService.execute_sandboxed_command(str(ws_dir), "rm -rf /")
     assert blocked["exit_code"] == 126
     assert "SECURITY INTERCEPTION" in blocked["stderr"]
+def test_execute_sandboxed_command_with_timeout(tmp_path):
+    ws_dir = tmp_path / "timeout_workspace"
+    ws_dir.mkdir()
+
+    # Command that times out
+    timeout_res = SandboxService.execute_sandboxed_command(str(ws_dir), "sleep 10", timeout_seconds=1)
+    assert timeout_res["exit_code"] == 124
+    assert "timed out" in timeout_res["stderr"].lower()
+
+def test_execute_sandboxed_command_risk_assessment_included(tmp_path):
+    ws_dir = tmp_path / "risk_workspace"
+    ws_dir.mkdir()
+
+    # Safe command includes risk assessment
+    exec_res = SandboxService.execute_sandboxed_command(str(ws_dir), "echo test")
+    assert "risk_assessment" in exec_res
+    assert exec_res["risk_assessment"]["risk_level"] == "SAFE"
+    assert exec_res["risk_assessment"]["safe_to_execute"] is True
+
+    # Guarded command includes risk assessment
+    guarded_res = SandboxService.execute_sandboxed_command(str(ws_dir), "npm install")
+    assert "risk_assessment" in guarded_res
+    assert guarded_res["risk_assessment"]["risk_level"] == "GUARDED"
+    assert guarded_res["risk_assessment"]["safe_to_execute"] is True
+    assert len(guarded_res["risk_assessment"]["flagged_patterns"]) > 0
