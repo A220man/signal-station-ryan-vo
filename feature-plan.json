@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_feature": "session-goal-orchestrator",
+  "current_feature": "patch-indentation-fix",
   "features": [
     {
       "id": "session-goal-orchestrator",
@@ -83,6 +83,24 @@
       ],
       "implementation": [],
       "tests": []
+    },
+    {
+      "id": "patch-indentation-fix",
+      "title": "Multi-line Patch Indentation Normalization",
+      "status": "done",
+      "acceptance": [
+        "Multi-line replacements in normalized_whitespace mode now consistently apply detected base indentation to all non-empty lines",
+        "Empty lines in replacements are preserved without added indentation",
+        "Added test coverage for multiline indentation and empty line preservation"
+      ],
+      "implementation": [
+        "backend/app/services/patch_service.py",
+        "backend/tests/test_patch.py"
+      ],
+      "tests": [
+        "backend/tests/test_patch.py::test_normalized_whitespace_multiline_replacement_indentation",
+        "backend/tests/test_patch.py::test_normalized_whitespace_multiline_with_empty_lines"
+      ]
     }
   ]
 }

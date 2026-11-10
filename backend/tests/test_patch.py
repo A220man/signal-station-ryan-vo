@@ -57,3 +57,34 @@ def test_file_patch_disk_mutation(tmp_path):
     )
     assert res["success"] is True
     assert target_file.read_text(encoding="utf-8") == "x = 1\ny = 2\nz = x * y\n"
+
+def test_normalized_whitespace_multiline_replacement_indentation():
+    """Test that multi-line replacements properly inherit detected base indentation for all lines."""
+    # Original has 2-space indentation
+    original = "def process_items(items):\n  result = []\n  for item in items:\n    result.append(item * 2)\n  return result\n"
+    # Target uses 4-space indentation (simulating LLM output)
+    target = "    result = []\n    for item in items:\n      result.append(item * 2)"
+    # Replacement has same number of lines as target with 4-space indentation
+    replacement = "    result = []\n    for item in items:\n      result.append(item * 3)"
+
+    ok, patched, strategy, _ = PatchService.apply_patch_string(original, target, replacement, "normalized_whitespace")
+    assert ok is True
+    assert strategy == "normalized_whitespace"
+    # All non-empty lines get the detected base indentation (2 spaces)
+    # The inner block line also gets 2 spaces (relative indentation from replacement is normalized)
+    assert "  result = []" in patched
+    assert "  for item in items:" in patched
+    assert "  result.append(item * 3)" in patched
+
+def test_normalized_whitespace_multiline_with_empty_lines():
+    """Test that empty lines in replacement are preserved without adding indentation."""
+    original = "def example():\n  a = 1\n  b = 2\n  return a + b\n"
+    target = "    a = 1\n    b = 2"
+    replacement = "    a = 1\n\n    b = 2\n    c = a + b"
+
+    ok, patched, strategy, _ = PatchService.apply_patch_string(original, target, replacement, "normalized_whitespace")
+    assert ok is True
+    assert strategy == "normalized_whitespace"
+    # Empty line should remain empty (no leading spaces)
+    assert "  a = 1\n\n  b = 2" in patched
+    assert "  c = a + b" in patched
