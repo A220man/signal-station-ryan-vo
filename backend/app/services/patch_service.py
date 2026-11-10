@@ -91,8 +91,10 @@ class PatchService:
             for idx, r_line in enumerate(replacement_lines):
                 if idx == 0:
                     adjusted_replacement.append(detected_indent + r_line.lstrip())
+                elif r_line.strip():  # Non-empty line - apply same indentation
+                    adjusted_replacement.append(detected_indent + r_line.lstrip())
                 else:
-                    adjusted_replacement.append(r_line)
+                    adjusted_replacement.append(r_line)  # Empty line stays empty
 
             new_lines = content_lines[:found_start] + adjusted_replacement + content_lines[found_end:]
             patched = "\n".join(new_lines)

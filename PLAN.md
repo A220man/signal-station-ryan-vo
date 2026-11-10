@@ -4,7 +4,7 @@ Each round completes one feature or repair. Future items are planned, not implem
 
 ## Current round
 
-session-goal-orchestrator
+patch-indentation-fix
 
 ## Roadmap
 
@@ -43,4 +43,17 @@ Status: planned
 Acceptance:
 - Tree-sitter based AST diffing and multi-language semantic replacement
 - Grammar-constrained syntax generation for complex refactors
+
+### patch-indentation-fix — Multi-line Patch Indentation Normalization
+
+Status: done
+
+Acceptance:
+- Multi-line replacements in normalized_whitespace mode now consistently apply detected base indentation to all non-empty lines
+- Empty lines in replacements are preserved without added indentation
+- Added test coverage for multiline indentation and empty line preservation
+
+Implementation: `backend/app/services/patch_service.py`, `backend/tests/test_patch.py`
+
+Tests: `backend/tests/test_patch.py::test_normalized_whitespace_multiline_replacement_indentation`, `backend/tests/test_patch.py::test_normalized_whitespace_multiline_with_empty_lines`
 
