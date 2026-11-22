@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "signal-station-ryan-vo"
-version = "1.6.0"
+version = "1.7.0"
 description = "Autonomous coding agent orchestration platform featuring safety sandboxing, persistent session goals, whitespace-resilient patch editing, and event compaction."
 readme = "README.md"
 requires-python = ">=3.12"

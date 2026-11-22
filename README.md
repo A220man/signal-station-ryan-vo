@@ -3,7 +3,7 @@
 > Work in progress. This checkpoint may be incomplete or fail tests. See PLAN.md and STATUS.md before use.
 
 
-Current version: `1.6.0`.
+Current version: `1.7.0`.
 
 Signal Station addresses the critical reliability and safety vulnerabilities of autonomous coding agents, specifically mitigating directory breakouts and unconstrained command execution, high tool-failure rates caused by subtle LLM whitespace/indentation discrepancies, lack of first-class session goal tracking with token budgets, and disk exhaustion from unbounded event-sourcing stores. Designed for ML systems engineers and developer-tool operators, Signal Station provides a deterministic agent orchestration runtime paired with safety sandboxing, whitespace-tolerant code patching, event log compaction, and an offline agent evaluation benchmark suite.
 
